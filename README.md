@@ -1,5 +1,7 @@
 # Instagram Non-Followers & Live Account Verifier
 
+> 🌐 **Live Web Version:** Click the website link in the **About** section (top-right sidebar of this repository) to open the app directly in your browser without downloading anything!
+
 A **100% private, zero-login** tool to find who doesn't follow you back on Instagram—and automatically filter out deactivated, renamed, or banned (`404`) accounts so you only see real, active profiles.
 
 ---
@@ -34,7 +36,8 @@ When you download any script (`.bat` or `.ps1`) from the internet, Windows Defen
 
 * **Why this happens:** Microsoft requires developers to purchase a commercial Code Signing Certificate ($300–$500/year) to remove that prompt. Because this is a free, open-source project, Windows treats it as an "unrecognized publisher."
 * **How to verify it's 100% safe yourself:**
-  1. Right-click **`start_app.bat`** and **`app_engine.ps1`** $ightarrow$ click **Edit in Notepad**.
+  1. Right-click **`start_app.bat`** and **`app_engine.ps1`** $
+ightarrow$ click **Edit in Notepad**.
   2. You can verify in seconds that `start_app.bat` only starts a local localhost page (`127.0.0.1:8765`) and `app_engine.ps1` only checks public `https://www.instagram.com/<username>/` links using Windows' built-in `curl.exe`.
   3. It creates zero files in your personal folders and requires zero administrator privileges.
 
@@ -42,10 +45,15 @@ When you download any script (`.bat` or `.ps1`) from the internet, Windows Defen
 
 ## 📥 How to Export Your Instagram Follower Data (Official Meta Method)
 
-1. Open **Instagram** $ightarrow$ **Settings & Privacy** $ightarrow$ **Accounts Center**.
-2. Go to **Your information and permissions** $ightarrow$ **Download your information**.
-3. Click **Download or transfer information** $ightarrow$ Select your Instagram account.
-4. Select **Some of your information** $ightarrow$ Check **Followers and following**.
+1. Open **Instagram** $
+ightarrow$ **Settings & Privacy** $
+ightarrow$ **Accounts Center**.
+2. Go to **Your information and permissions** $
+ightarrow$ **Download your information**.
+3. Click **Download or transfer information** $
+ightarrow$ Select your Instagram account.
+4. Select **Some of your information** $
+ightarrow$ Check **Followers and following**.
 5. Choose **Download to device** and set:
    * **Format:** `JSON` *(Important: choose JSON, not HTML)*
    * **Date range:** `All time`
