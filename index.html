@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Non-Followers &amp; Live Account Verifier</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            --primary: #0095f6;
+            --primary-hover: #1877f2;
+            --danger: #ed4956;
+            --success: #2ecc71;
+            --bg: #fafafa;
+            --card: #ffffff;
+            --border: #dbdbdb;
+            --text: #262626;
+            --muted: #737373;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px 16px 60px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .title-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #eef6ff;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .title-badge.desktop-active {
+            background: #e8f8f0;
+            color: #1b8a4b;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 6px;
+            font-weight: 700;
+        }
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0;
+        }
+        .upload-card {
+            background: var(--card);
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 36px 24px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .upload-card:hover, .upload-card.dragover {
+            border-color: var(--primary);
+            background: #f7fbff;
+        }
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: var(--primary-hover); }
+        .btn:active { transform: scale(0.98); }
+        .btn-outline {
+            background: #fff;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover { background: #f5f5f5; }
+        /* Loading Spinner & Progress */
+        #loadingView {
+            display: none;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 36px 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888, transparent);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 0);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 0);
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .pct-number {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 4px 0;
+            background: var(--ig-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .progress-track {
+            width: 100%;
+            max-width: 420px;
+            height: 10px;
+            background: #efefef;
+            border-radius: 999px;
+            margin: 12px auto;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--ig-gradient);
+            transition: width 0.2s ease;
+        }
+        .status-text {
+            font-size: 14px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+        /* Dashboard View */
+        #dashboardView { display: none; }
+        .top-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .benchmark-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        /* Unfollow Progress Card */
+        .unfollow-progress-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .unfollow-progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .safety-banner {
+            background: #fff8e6;
+            border: 1px solid #ffd580;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #7a5200;
+            margin-bottom: 16px;
+        }
+        /* Toolbar & Tabs */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--muted);
+        }
+        .tab-btn.active {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+        .search-input {
+            flex: 1;
+            min-width: 180px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .user-list {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 16px;
+            border-bottom: 1px solid #efefef;
+            transition: background 0.15s ease;
+        }
+        .user-row:last-child { border-bottom: none; }
+        .user-row:hover { background: #fafafa; }
+        .user-row.is-done .user-link {
+            text-decoration: line-through;
+            color: var(--muted);
+        }
+        .user-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .user-link:hover { text-decoration: underline; }
+        .row-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .btn-done {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-done.completed {
+            background: var(--success);
+        }
+        .btn-done.completed:hover::after {
+            content: " (Undo)";
+        }
+        .btn-dead {
+            background: #f0f0f0;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-dead.marked-dead {
+            background: #333;
+            color: #fff;
+        }
+        .empty-state {
+            padding: 36px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .footer-controls {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #262626;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 999;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div id="engineBadge" class="title-badge">
+            &#9889; Checking Local Verifier Engine...
+        </div>
+        <h1>Instagram Non-Followers Checker</h1>
+        <p class="subtitle" id="accountSubtitle">100% Private &bull; Automatic Ghost &amp; 404 Dead Profile Verification</p>
+    </header>
+
+    <!-- Upload Box -->
+    <div id="uploadView" class="upload-card" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">&#128230;</div>
+        <h3 style="margin: 0 0 6px;">Drop your Instagram <code>.zip</code> export here</h3>
+        <p style="color: var(--muted); font-size: 13px; margin: 0 0 16px;">
+            Or select <code>following.json</code> and <code>followers_1.json</code> directly
+        </p>
+        <button class="btn" type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click();">
+            Select ZIP or JSON Files
+        </button>
+        <input type="file" id="fileInput" multiple accept=".zip,.json" style="display:none">
+    </div>
+
+    <!-- Loading & Progress View -->
+    <div id="loadingView">
+        <div class="spinner"></div>
+        <div class="pct-number" id="pctText">0%</div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="status-text" id="statusText">Initializing reader...</div>
+    </div>
+
+    <!-- Results Dashboard View -->
+    <div id="dashboardView">
+        <div class="top-meta">
+            <div class="benchmark-badge" id="benchmarkBadge">&#9889; Analyzed in 0.00s</div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-outline" onclick="copyRemaining()">&#128203; Copy Remaining</button>
+                <button class="btn btn-outline" onclick="resetApp()">&#8634; Analyze Another File</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-val" id="statFollowing">0</div>
+                <div class="stat-label">Following</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statFollowers">0</div>
+                <div class="stat-label">Followers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statActiveNon" style="color: var(--danger);">0</div>
+                <div class="stat-label">Active Non-Followers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statDeadCount" style="color: var(--muted);">0</div>
+                <div class="stat-label">&#128683; Dead / 404 Pruned</div>
+            </div>
+        </div>
+
+        <div class="unfollow-progress-card">
+            <div class="unfollow-progress-header">
+                <span>Unfollow Review Progress</span>
+                <span id="unfollowProgressLabel">0 / 0 Unfollowed (0%)</span>
+            </div>
+            <div class="progress-track" style="max-width: 100%; margin: 0;">
+                <div class="progress-fill" id="unfollowBarFill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="safety-banner">
+            &#9888;&#65039; <b>Safe Pacing Guide:</b> Unfollow max <b>20 - 30 accounts per session</b> with <b>15 - 30 seconds</b> between actions to keep your account 100% safe from temporary rate limits.
+        </div>
+
+        <div class="toolbar">
+            <div class="tabs">
+                <button class="tab-btn active" id="tabPending" onclick="setTab('pending')">To Unfollow (0)</button>
+                <button class="tab-btn" id="tabDone" onclick="setTab('done')">Reviewed / Done (0)</button>
+                <button class="tab-btn" id="tabDead" onclick="setTab('dead')">&#128683; Dead / 404 (0)</button>
+                <button class="tab-btn" id="tabAll" onclick="setTab('all')">All Active (0)</button>
+            </div>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search @username..." oninput="renderList()">
+        </div>
+
+        <div class="user-list" id="userListContainer"></div>
+
+        <div class="footer-controls">
+            <span style="color: var(--muted);">Progress auto-saves in your browser per Instagram account.</span>
+            <button class="btn btn-outline" style="font-size:12px; padding:6px 12px;" onclick="clearAccountProgress()">
+                &#8634; Reset All Done Markers
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+    let localEngineAvailable = false;
+    let currentAccount = "default";
+    let allCandidates = []; // All non-followers (excluding __deleted__)
+    let doneSet = new Set();
+    let deadSet = new Set();
+    let currentTab = "pending";
+
+    // Check if running inside the Local Desktop App Server
+    async function checkLocalEngine() {
+        const badge = document.getElementById("engineBadge");
+        try {
+            const res = await fetch("/api/ping", { method: "GET", cache: "no-store" });
+            if (res.ok) {
+                localEngineAvailable = true;
+                badge.className = "title-badge desktop-active";
+                badge.innerHTML = "&#10004; Desktop Auto-Verifier Active (Zero-Login 404 Pruning Enabled)";
+                return;
+            }
+        } catch (e) {}
+        localEngineAvailable = false;
+        badge.className = "title-badge";
+        badge.innerHTML = "&#127760; Browser Mode (Run start_app.bat for Automatic 404 Verification)";
+    }
+    checkLocalEngine();
+
+    // Drag & Drop Events
+    const uploadView = document.getElementById("uploadView");
+    const fileInput = document.getElementById("fileInput");
+
+    uploadView.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadView.classList.add("dragover");
+    });
+    uploadView.addEventListener("dragleave", () => uploadView.classList.remove("dragover"));
+    uploadView.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadView.classList.remove("dragover");
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length) handleFiles(e.target.files);
+    });
+
+    function setProgress(pct, text) {
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        document.getElementById("pctText").innerText = clamped + "%";
+        document.getElementById("progressFill").style.width = clamped + "%";
+        if (text) document.getElementById("statusText").innerText = text;
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2400);
+    }
+
+    function extractUsernamesFromJSON(data) {
+        const set = new Set();
+        let items = [];
+        if (Array.isArray(data)) {
+            items = data;
+        } else if (data && typeof data === "object") {
+            for (const k of ["relationships_following", "relationships_followers", "following", "followers"]) {
+                if (Array.isArray(data[k])) { items = data[k]; break; }
+            }
+            if (!items.length) {
+                for (const v of Object.values(data)) {
+                    if (Array.isArray(v)) { items = v; break; }
+                }
+            }
+        }
+        for (const item of items) {
+            const list = item.string_list_data || [];
+            for (const entry of list) {
+                let u = entry.value;
+                if (!u && entry.href) {
+                    u = entry.href.replace(/\/$/, "").split("/").pop();
+                }
+                if (u) {
+                    u = u.trim().toLowerCase();
+                    if (!u.startsWith("__deleted__") && !u.includes("_deleted_") && u !== "instagrammer") {
+                        set.add(u);
+                    }
+                }
+            }
+        }
+        return set;
+    }
+
+    function detectUsernameFromZipName(filename) {
+        const m = filename.match(/^instagram-([a-zA-Z0-9._]+)-\d{4}-\d{2}-\d{2}/i);
+        return m ? m[1].toLowerCase() : filename.replace(/\.[^/.]+$/, "").toLowerCase();
+    }
+
+    async function handleFiles(fileList) {
+        const t0 = performance.now();
+        await checkLocalEngine();
+
+        document.getElementById("uploadView").style.display = "none";
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("loadingView").style.display = "block";
+        setProgress(2, "Starting file analysis...");
+
+        let followingSet = new Set();
+        let followersSet = new Set();
+        let detectedAccount = "account";
+
+        try {
+            const firstFile = fileList[0];
+            if (firstFile.name.toLowerCase().endsWith(".zip")) {
+                detectedAccount = detectUsernameFromZipName(firstFile.name);
+                const sizeMB = (firstFile.size / (1024 * 1024)).toFixed(1);
+                setProgress(10, `Reading ${sizeMB} MB archive in memory...`);
+
+                const zip = await JSZip.loadAsync(firstFile);
+                const entries = Object.keys(zip.files);
+                setProgress(25, "Scanning archive structure for followers & following...");
+
+                const followingFiles = [];
+                const followerFiles = [];
+                let personalFile = null;
+
+                for (const path of entries) {
+                    const lower = path.toLowerCase().replace(/\\/g, "/");
+                    if (lower.includes("/threads/")) continue;
+                    const base = lower.split("/").pop();
+                    if (base === "following.json") {
+                        followingFiles.push(zip.files[path]);
+                    } else if (/^followers(_\d+)?\.json$/.test(base)) {
+                        followerFiles.push(zip.files[path]);
+                    } else if (base === "personal_information.json" && !personalFile) {
+                        personalFile = zip.files[path];
+                    }
+                }
+
+                if (personalFile) {
+                    try {
+                        const pTxt = await personalFile.async("string");
+                        const pData = JSON.parse(pTxt);
+                        const pUser = pData?.profile_user?.[0]?.string_map_data?.Username?.value;
+                        if (pUser) detectedAccount = pUser.trim().toLowerCase();
+                    } catch(e) {}
+                }
+
+                if (!followingFiles.length || !followerFiles.length) {
+                    throw new Error("Could not find following.json and followers_1.json inside this ZIP archive.");
+                }
+
+                setProgress(32, "Extracting following.json...");
+                for (const f of followingFiles) {
+                    const txt = await f.async("string");
+                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
+                    parsed.forEach(u => followingSet.add(u));
+                }
+
+                setProgress(38, "Extracting followers JSON files...");
+                for (const f of followerFiles) {
+                    const txt = await f.async("string");
+                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
+                    parsed.forEach(u => followersSet.add(u));
+                }
+            } else {
+                for (const f of fileList) {
+                    const base = f.name.toLowerCase();
+                    const txt = await f.text();
+                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
+                    if (base.includes("following")) {
+                        parsed.forEach(u => followingSet.add(u));
+                    } else if (base.includes("followers")) {
+                        parsed.forEach(u => followersSet.add(u));
+                    }
+                }
+                if (!followingSet.size || !followersSet.size) {
+                    throw new Error("Please select both following.json and followers_1.json.");
+                }
+            }
+
+            allCandidates = Array.from(followingSet).filter(u => !followersSet.has(u)).sort();
+            currentAccount = detectedAccount;
+
+            // Clean up any poisoned dead cache from v2
+            localStorage.removeItem(`ig_verified_dead_${currentAccount}`);
+
+            // Load isolated storage for this account
+            loadAccountStorage(allCandidates);
+
+            // When running with Desktop Auto-Verifier, perform a clean live verification of all candidates
+            if (localEngineAvailable && allCandidates.length > 0) {
+                deadSet = new Set();
+                const batchSize = 5;
+                let checked = 0;
+                let activeCountSoFar = 0;
+
+                for (let i = 0; i < allCandidates.length; i += batchSize) {
+                    const batch = allCandidates.slice(i, i + batchSize);
+                    const pct = 40 + ((checked / allCandidates.length) * 58);
+                    setProgress(
+                        pct,
+                        `Verifying live profiles: ${checked} / ${allCandidates.length} checked (${activeCountSoFar} active, ${deadSet.size} dead)...`
+                    );
+                    try {
+                        const resp = await fetch("/api/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ usernames: batch })
+                        });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            activeCountSoFar += (data.active || []).length;
+                            for (const deadUser of (data.dead || [])) {
+                                deadSet.add(deadUser);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn("Batch verification error:", err);
+                    }
+                    checked += batch.length;
+                }
+                saveAccountStorage();
+            }
+
+            setProgress(100, "Complete!");
+            const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
+
+            // Store raw sets globally so renderList() can show active Following (excluding Dead/404)
+            window.rawFollowingCount = followingSet.size;
+            window.rawFollowersCount = followersSet.size;
+            document.getElementById("benchmarkBadge").innerHTML =
+                `&#9889; Analyzed ${(followingSet.size + followersSet.size).toLocaleString()} connections in ${elapsed}s`;
+            document.getElementById("accountSubtitle").innerHTML =
+                `Verified Active Non-Followers for <b>@${currentAccount}</b>`;
+
+            document.getElementById("loadingView").style.display = "none";
+            document.getElementById("dashboardView").style.display = "block";
+            setTab("pending");
+
+        } catch (err) {
+            alert(err.message || "Error reading files.");
+            resetApp();
+        }
+    }
+
+    function getDoneKey() { return `ig_verified_done_${currentAccount}`; }
+    function getDeadKey() { return `ig_verified_dead_v3_${currentAccount}`; }
+
+    function loadAccountStorage(candidateList) {
+        const validSet = new Set(candidateList);
+        try {
+            const rawDone = JSON.parse(localStorage.getItem(getDoneKey()) || "[]");
+            doneSet = new Set(rawDone.filter(u => validSet.has(u)));
+        } catch (e) { doneSet = new Set(); }
+
+        try {
+            const rawDead = JSON.parse(localStorage.getItem(getDeadKey()) || "[]");
+            deadSet = new Set(rawDead.filter(u => validSet.has(u)));
+        } catch (e) { deadSet = new Set(); }
+    }
+
+    function saveAccountStorage() {
+        localStorage.setItem(getDoneKey(), JSON.stringify(Array.from(doneSet)));
+        localStorage.setItem(getDeadKey(), JSON.stringify(Array.from(deadSet)));
+    }
+
+    function toggleDone(username) {
+        if (doneSet.has(username)) {
+            doneSet.delete(username);
+        } else {
+            doneSet.add(username);
+        }
+        saveAccountStorage();
+        renderList();
+    }
+
+    function toggleDead(username) {
+        if (deadSet.has(username)) {
+            deadSet.delete(username);
+        } else {
+            deadSet.add(username);
+            doneSet.delete(username);
+        }
+        saveAccountStorage();
+        renderList();
+    }
+
+    function setTab(tab) {
+        currentTab = tab;
+        document.getElementById("tabPending").classList.toggle("active", tab === "pending");
+        document.getElementById("tabDone").classList.toggle("active", tab === "done");
+        document.getElementById("tabDead").classList.toggle("active", tab === "dead");
+        document.getElementById("tabAll").classList.toggle("active", tab === "all");
+        renderList();
+    }
+
+    function renderList() {
+        const activeUsers = allCandidates.filter(u => !deadSet.has(u));
+        const pendingUsers = activeUsers.filter(u => !doneSet.has(u));
+        const doneUsers = activeUsers.filter(u => doneSet.has(u));
+        const deadUsers = allCandidates.filter(u => deadSet.has(u));
+
+        // Update top counters (Subtract Dead/404 accounts from Following so it matches live Instagram profile!)
+        const liveFollowingCount = Math.max(0, (window.rawFollowingCount || 0) - deadUsers.length);
+        document.getElementById("statFollowing").innerText = liveFollowingCount.toLocaleString();
+        document.getElementById("statFollowers").innerText = (window.rawFollowersCount || 0).toLocaleString();
+        document.getElementById("statActiveNon").innerText = activeUsers.length.toLocaleString();
+        document.getElementById("statDeadCount").innerText = deadUsers.length.toLocaleString();
+
+        // Update progress bar
+        const totalActive = activeUsers.length;
+        const completedCount = doneUsers.length;
+        const pct = totalActive > 0 ? Math.round((completedCount / totalActive) * 100) : 0;
+        document.getElementById("unfollowProgressLabel").innerText =
+            `${completedCount} / ${totalActive} Unfollowed (${pct}%)`;
+        document.getElementById("unfollowBarFill").style.width = pct + "%";
+
+        // Update tab labels
+        document.getElementById("tabPending").innerText = `To Unfollow (${pendingUsers.length})`;
+        document.getElementById("tabDone").innerText = `Reviewed / Done (${doneUsers.length})`;
+        document.getElementById("tabDead").innerHTML = `&#128683; Dead / 404 (${deadUsers.length})`;
+        document.getElementById("tabAll").innerText = `All Active (${activeUsers.length})`;
+
+        let sourceList = pendingUsers;
+        if (currentTab === "done") sourceList = doneUsers;
+        else if (currentTab === "dead") sourceList = deadUsers;
+        else if (currentTab === "all") sourceList = activeUsers;
+
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        const filtered = query ? sourceList.filter(u => u.includes(query)) : sourceList;
+
+        const container = document.getElementById("userListContainer");
+        if (!filtered.length) {
+            container.innerHTML = `<div class="empty-state">No accounts in this view.</div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(u => {
+            const isDone = doneSet.has(u);
+            const isDead = deadSet.has(u);
+            return `
+            <div class="user-row ${isDone ? 'is-done' : ''}">
+                <a class="user-link" href="https://www.instagram.com/${u}/" target="_blank" rel="noopener noreferrer">@${u}</a>
+                <div class="row-actions">
+                    ${!isDead ? `
+                    <button class="btn-done ${isDone ? 'completed' : ''}" onclick="toggleDone('${u}')">
+                        ${isDone ? '&#10004; Done' : 'Mark Done'}
+                    </button>` : ''}
+                    <button class="btn-dead ${isDead ? 'marked-dead' : ''}" onclick="toggleDead('${u}')" title="Mark or unmark as Dead / 404">
+                        &#128683; ${isDead ? 'Restore' : 'Dead'}
+                    </button>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    function copyRemaining() {
+        const pending = allCandidates.filter(u => !deadSet.has(u) && !doneSet.has(u));
+        navigator.clipboard.writeText(pending.join("\n")).then(() => {
+            showToast(`Copied ${pending.length} usernames to clipboard!`);
+        });
+    }
+
+    function clearAccountProgress() {
+        if (!confirm(`Reset all "Done" markers for @${currentAccount}?`)) return;
+        doneSet.clear();
+        saveAccountStorage();
+        renderList();
+        showToast("Progress reset.");
+    }
+
+    function resetApp() {
+        fileInput.value = "";
+        document.getElementById("loadingView").style.display = "none";
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("uploadView").style.display = "block";
+    }
+</script>
+</body>
+</html>
