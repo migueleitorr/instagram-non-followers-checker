@@ -28,7 +28,7 @@
             line-height: 1.5;
         }
         .container {
-            max-width: 760px;
+            max-width: 800px;
             margin: 0 auto;
         }
         header {
@@ -101,6 +101,22 @@
             border: 1px solid var(--border);
         }
         .btn-outline:hover { background: #f5f5f5; }
+        .btn-danger-outline {
+            background: #fff;
+            color: var(--danger);
+            border: 1px solid #ffd0d3;
+        }
+        .btn-danger-outline:hover {
+            background: #fff5f5;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .resume-box {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #efefef;
+            display: none;
+        }
         /* Loading Spinner & Progress */
         #loadingView {
             display: none;
@@ -220,14 +236,14 @@
             color: #7a5200;
             margin-bottom: 16px;
         }
-        /* Toolbar & Tabs */
+        /* Toolbar, Tabs & Sort Controls */
         .toolbar {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .tabs {
             display: flex;
@@ -249,6 +265,14 @@
             color: #fff;
             border-color: var(--text);
         }
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
         .search-input {
             flex: 1;
             min-width: 180px;
@@ -256,6 +280,38 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 14px;
+            background: #fff;
+        }
+        .sort-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .sort-btn {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+        }
+        .sort-btn:hover {
+            background: #f5f5f5;
+        }
+        .sort-btn.active {
+            background: #eef6ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .sort-btn.disabled-sort {
+            opacity: 0.55;
         }
         .user-list {
             background: var(--card);
@@ -270,6 +326,7 @@
             padding: 11px 16px;
             border-bottom: 1px solid #efefef;
             transition: background 0.15s ease;
+            gap: 10px;
         }
         .user-row:last-child { border-bottom: none; }
         .user-row:hover { background: #fafafa; }
@@ -277,16 +334,65 @@
             text-decoration: line-through;
             color: var(--muted);
         }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+        .rank-num {
+            font-size: 12px;
+            font-weight: 700;
+            color: #999;
+            min-width: 26px;
+        }
         .user-link {
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
             font-size: 15px;
+            word-break: break-all;
         }
         .user-link:hover { text-decoration: underline; }
+        .follower-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f2f3f5;
+            color: #555;
+            border: 1px solid #e4e6eb;
+        }
+        .follower-badge.high-followers {
+            background: #f3e8ff;
+            color: #7e22ce;
+            border-color: #e9d5ff;
+        }
+        .follower-badge.mid-followers {
+            background: #eef6ff;
+            color: #0077c5;
+            border-color: #cfe8ff;
+        }
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #fafafa;
+            color: #737373;
+            border: 1px solid #e5e5e5;
+        }
         .row-actions {
             display: flex;
             gap: 6px;
+            flex-shrink: 0;
         }
         .btn-done {
             background: var(--danger);
@@ -358,7 +464,7 @@
             &#9889; Checking Local Verifier Engine...
         </div>
         <h1>Instagram Non-Followers Checker</h1>
-        <p class="subtitle" id="accountSubtitle">100% Private &bull; Automatic Ghost &amp; 404 Dead Profile Verification</p>
+        <p class="subtitle" id="accountSubtitle">100% Private &bull; Auto 404 Pruning, Follower Count &amp; Follow Date Ranking</p>
     </header>
 
     <!-- Upload Box -->
@@ -372,6 +478,17 @@
             Select ZIP or JSON Files
         </button>
         <input type="file" id="fileInput" multiple accept=".zip,.json" style="display:none">
+
+        <div id="resumeBox" class="resume-box" onclick="event.stopPropagation();">
+            <div style="display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                <button class="btn btn-outline" type="button" id="resumeBtn" onclick="restoreLastSavedSession(true)">
+                    &#9889; Resume Saved Session
+                </button>
+                <button class="btn btn-danger-outline" type="button" id="deleteSavedBtn" onclick="deleteCurrentSession()" title="Delete saved session from this computer">
+                    &#128465;&#65039; Delete Saved Session
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Loading & Progress View -->
@@ -388,9 +505,15 @@
     <div id="dashboardView">
         <div class="top-meta">
             <div class="benchmark-badge" id="benchmarkBadge">&#9889; Analyzed in 0.00s</div>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-outline" id="verifyNowBtn" style="display:none; border-color:#1b8a4b; color:#1b8a4b;" onclick="verifyCurrentSessionWithEngine()">
+                    &#9889; Run Live 404 &amp; Follower Check
+                </button>
                 <button class="btn btn-outline" onclick="copyRemaining()">&#128203; Copy Remaining</button>
-                <button class="btn btn-outline" onclick="resetApp()">&#8634; Analyze Another File</button>
+                <button class="btn btn-outline" onclick="resetApp()">&#8634; Load Another ZIP</button>
+                <button class="btn btn-danger-outline" onclick="deleteCurrentSession()" title="Delete this saved session from this computer">
+                    &#128465;&#65039; Delete Session
+                </button>
             </div>
         </div>
 
@@ -434,16 +557,35 @@
                 <button class="tab-btn" id="tabDead" onclick="setTab('dead')">&#128683; Dead / 404 (0)</button>
                 <button class="tab-btn" id="tabAll" onclick="setTab('all')">All Active (0)</button>
             </div>
+        </div>
+
+        <div class="filter-bar">
             <input type="text" class="search-input" id="searchInput" placeholder="Search @username..." oninput="renderList()">
+            <div class="sort-group">
+                <button class="sort-btn active" id="sortFollowersToggle" onclick="toggleFollowerSort()" title="Sort by Follower Count (Most to Fewest / Fewest to Most)">
+                    &#8595; Followers: Most to Fewest
+                </button>
+                <button class="sort-btn" id="sortDateToggle" onclick="toggleDateSort()" title="Sort by when you followed them (Oldest First / Newest First)">
+                    &#128197; Followed: Oldest First
+                </button>
+                <button class="sort-btn" id="sortAlphaBtn" onclick="toggleAlphaSort()" title="Sort alphabetically by username (A-Z / Z-A)">
+                    A &ndash; Z
+                </button>
+            </div>
         </div>
 
         <div class="user-list" id="userListContainer"></div>
 
         <div class="footer-controls">
-            <span style="color: var(--muted);">Progress auto-saves in your browser per Instagram account.</span>
-            <button class="btn btn-outline" style="font-size:12px; padding:6px 12px;" onclick="clearAccountProgress()">
-                &#8634; Reset All Done Markers
-            </button>
+            <span style="color: var(--muted);">Full session, progress &amp; follower counts auto-save in your browser.</span>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-outline" style="font-size:12px; padding:6px 12px;" onclick="clearAccountProgress()">
+                    &#8634; Reset All Done Markers
+                </button>
+                <button class="btn btn-danger-outline" style="font-size:12px; padding:6px 12px;" onclick="deleteCurrentSession()" title="Permanently delete all session data for this account">
+                    &#128465;&#65039; Delete Session Data
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -456,7 +598,33 @@
     let allCandidates = []; // All non-followers (excluding __deleted__)
     let doneSet = new Set();
     let deadSet = new Set();
+    let followerCounts = {}; // { username: number }
+    let followedTimestamps = {}; // { username: unix_timestamp_seconds }
     let currentTab = "pending";
+    let sortMode = "followers_desc"; // 'followers_desc' | 'followers_asc' | 'date_asc' | 'date_desc' | 'alpha_asc' | 'alpha_desc'
+
+    const LAST_ACCOUNT_KEY = "ig_last_active_account_v9";
+    const LEGACY_LAST_ACCOUNT_KEY = "ig_last_active_account_v8";
+    function getSessionKey(acct) { return `ig_session_snapshot_v9_${acct}`; }
+    function getLegacySessionKey(acct) { return `ig_session_snapshot_v8_${acct}`; }
+    function getDoneKey() { return `ig_verified_done_${currentAccount}`; }
+    function getDeadKey() { return `ig_verified_dead_v3_${currentAccount}`; }
+    function getCountsKey() { return `ig_verified_counts_v6_${currentAccount}`; }
+
+    function getStoredLastAccount() {
+        return localStorage.getItem(LAST_ACCOUNT_KEY) || localStorage.getItem(LEGACY_LAST_ACCOUNT_KEY) || null;
+    }
+
+    function getStoredSnapshot(acct) {
+        if (!acct) return null;
+        const raw = localStorage.getItem(getSessionKey(acct)) || localStorage.getItem(getLegacySessionKey(acct));
+        if (!raw) return null;
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
 
     // Check if running inside the Local Desktop App Server
     async function checkLocalEngine() {
@@ -466,15 +634,117 @@
             if (res.ok) {
                 localEngineAvailable = true;
                 badge.className = "title-badge desktop-active";
-                badge.innerHTML = "&#10004; Desktop Auto-Verifier Active (Zero-Login 404 Pruning Enabled)";
+                badge.innerHTML = "&#10004; Desktop Auto-Verifier Active (Live 404 Pruning + Follower Count Ranking)";
+                updateVerifyNowButton();
                 return;
             }
         } catch (e) {}
         localEngineAvailable = false;
         badge.className = "title-badge";
-        badge.innerHTML = "&#127760; Browser Mode (Run start_app.bat for Automatic 404 Verification)";
+        badge.innerHTML = "&#127760; Web Mode (Sort by Follow Date &amp; A-Z Active &bull; Run start_app.bat for Follower Counts &amp; 404 Pruning)";
+        updateVerifyNowButton();
     }
-    checkLocalEngine();
+
+    function updateVerifyNowButton() {
+        const btn = document.getElementById("verifyNowBtn");
+        if (!btn) return;
+        const hasCounts = Object.keys(followerCounts).length > 0;
+        if (localEngineAvailable && allCandidates.length > 0 && !hasCounts) {
+            btn.style.display = "inline-flex";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+
+    // Save full session snapshot so closing/reopening the tab restores everything immediately without the ZIP
+    function saveFullSessionSnapshot(elapsedSec) {
+        try {
+            localStorage.setItem(LAST_ACCOUNT_KEY, currentAccount);
+            const snapshot = {
+                account: currentAccount,
+                allCandidates: allCandidates,
+                followedTimestamps: followedTimestamps,
+                rawFollowingCount: window.rawFollowingCount || 0,
+                rawFollowersCount: window.rawFollowersCount || 0,
+                elapsed: elapsedSec || "0.00",
+                sortMode: sortMode,
+                savedAt: Date.now()
+            };
+            localStorage.setItem(getSessionKey(currentAccount), JSON.stringify(snapshot));
+        } catch (e) {
+            console.warn("Could not save full session snapshot:", e);
+        }
+    }
+
+    // Automatically restore last saved session on page load
+    function restoreLastSavedSession(showNotification = false) {
+        try {
+            const lastAcct = getStoredLastAccount();
+            if (!lastAcct) return false;
+            const snap = getStoredSnapshot(lastAcct);
+            if (!snap || !Array.isArray(snap.allCandidates) || !snap.allCandidates.length) return false;
+
+            currentAccount = snap.account || lastAcct;
+            allCandidates = snap.allCandidates;
+            followedTimestamps = snap.followedTimestamps || {};
+            window.rawFollowingCount = snap.rawFollowingCount || 0;
+            window.rawFollowersCount = snap.rawFollowersCount || 0;
+
+            loadAccountStorage(allCandidates);
+
+            const hasFollowerCounts = Object.keys(followerCounts).length > 0;
+            const folBtn = document.getElementById("sortFollowersToggle");
+            folBtn.classList.toggle("disabled-sort", !hasFollowerCounts);
+
+            if (snap.sortMode && (hasFollowerCounts || !snap.sortMode.startsWith("followers_"))) {
+                setSortMode(snap.sortMode, false);
+            } else if (hasFollowerCounts) {
+                setSortMode("followers_desc", false);
+            } else if (Object.keys(followedTimestamps).length > 0) {
+                setSortMode("date_asc", false);
+            } else {
+                setSortMode("alpha_asc", false);
+            }
+
+            const totalConn = (window.rawFollowingCount || 0) + (window.rawFollowersCount || 0);
+            document.getElementById("benchmarkBadge").innerHTML =
+                `&#128190; Restored saved session (${totalConn.toLocaleString()} connections)`;
+            document.getElementById("accountSubtitle").innerHTML =
+                `Verified Active Non-Followers for <b>@${currentAccount}</b>`;
+
+            document.getElementById("uploadView").style.display = "none";
+            document.getElementById("loadingView").style.display = "none";
+            document.getElementById("dashboardView").style.display = "block";
+            updateVerifyNowButton();
+            setTab("pending");
+
+            if (showNotification) {
+                showToast(`Restored session for @${currentAccount}`);
+            }
+            return true;
+        } catch (e) {
+            console.warn("Restore session error:", e);
+            return false;
+        }
+    }
+
+    function updateResumeBoxVisibility() {
+        const box = document.getElementById("resumeBox");
+        const btn = document.getElementById("resumeBtn");
+        const lastAcct = getStoredLastAccount();
+        if (lastAcct && getStoredSnapshot(lastAcct)) {
+            box.style.display = "block";
+            btn.innerHTML = `&#9889; Resume Saved Session (@${lastAcct})`;
+        } else {
+            box.style.display = "none";
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        await checkLocalEngine();
+        restoreLastSavedSession(false);
+        updateResumeBoxVisibility();
+    });
 
     // Drag & Drop Events
     const uploadView = document.getElementById("uploadView");
@@ -505,10 +775,31 @@
         const t = document.getElementById("toast");
         t.innerText = msg;
         t.classList.add("show");
-        setTimeout(() => t.classList.remove("show"), 2400);
+        setTimeout(() => t.classList.remove("show"), 2600);
     }
 
-    function extractUsernamesFromJSON(data) {
+    function formatFollowerCount(num) {
+        if (num === undefined || num === null || num < 0) return null;
+        if (num >= 1000000) {
+            const val = (num / 1000000).toFixed(1).replace(/\.0$/, "");
+            return val + "M followers";
+        }
+        if (num >= 10000) {
+            const val = (num / 1000).toFixed(1).replace(/\.0$/, "");
+            return val + "K followers";
+        }
+        return num.toLocaleString() + (num === 1 ? " follower" : " followers");
+    }
+
+    function formatFollowDate(tsSeconds) {
+        if (!tsSeconds || tsSeconds <= 0) return null;
+        const d = new Date(tsSeconds * 1000);
+        if (isNaN(d.getTime())) return null;
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `Followed ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    }
+
+    function extractUsernamesFromJSON(data, recordTimestamps = false) {
         const set = new Set();
         let items = [];
         if (Array.isArray(data)) {
@@ -527,6 +818,9 @@
             const list = item.string_list_data || [];
             for (const entry of list) {
                 let u = entry.value;
+                if (!u && item.title && typeof item.title === "string") {
+                    u = item.title;
+                }
                 if (!u && entry.href) {
                     u = entry.href.replace(/\/$/, "").split("/").pop();
                 }
@@ -534,6 +828,9 @@
                     u = u.trim().toLowerCase();
                     if (!u.startsWith("__deleted__") && !u.includes("_deleted_") && u !== "instagrammer") {
                         set.add(u);
+                        if (recordTimestamps && typeof entry.timestamp === "number" && entry.timestamp > 0) {
+                            followedTimestamps[u] = entry.timestamp;
+                        }
                     }
                 }
             }
@@ -544,6 +841,63 @@
     function detectUsernameFromZipName(filename) {
         const m = filename.match(/^instagram-([a-zA-Z0-9._]+)-\d{4}-\d{2}-\d{2}/i);
         return m ? m[1].toLowerCase() : filename.replace(/\.[^/.]+$/, "").toLowerCase();
+    }
+
+    async function runEngineVerificationLoop() {
+        deadSet = new Set();
+        const batchSize = 5;
+        let checked = 0;
+        let activeCountSoFar = 0;
+
+        for (let i = 0; i < allCandidates.length; i += batchSize) {
+            const batch = allCandidates.slice(i, i + batchSize);
+            const pct = 40 + ((checked / allCandidates.length) * 58);
+            setProgress(
+                pct,
+                `Verifying profiles & follower counts: ${checked} / ${allCandidates.length} checked (${activeCountSoFar} active, ${deadSet.size} dead)...`
+            );
+            try {
+                const resp = await fetch("/api/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usernames: batch })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    activeCountSoFar += (data.active || []).length;
+                    for (const deadUser of (data.dead || [])) {
+                        deadSet.add(deadUser);
+                    }
+                    if (data.counts && typeof data.counts === "object") {
+                        for (const [uKey, cVal] of Object.entries(data.counts)) {
+                            if (typeof cVal === "number" && cVal >= 0) {
+                                followerCounts[uKey] = cVal;
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Batch verification error:", err);
+            }
+            checked += batch.length;
+        }
+        saveAccountStorage();
+    }
+
+    async function verifyCurrentSessionWithEngine() {
+        await checkLocalEngine();
+        if (!localEngineAvailable || !allCandidates.length) return;
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("loadingView").style.display = "block";
+        await runEngineVerificationLoop();
+        const hasFollowerCounts = Object.keys(followerCounts).length > 0;
+        document.getElementById("sortFollowersToggle").classList.toggle("disabled-sort", !hasFollowerCounts);
+        if (hasFollowerCounts) setSortMode("followers_desc", false);
+        saveFullSessionSnapshot();
+        document.getElementById("loadingView").style.display = "none";
+        document.getElementById("dashboardView").style.display = "block";
+        updateVerifyNowButton();
+        renderList();
     }
 
     async function handleFiles(fileList) {
@@ -557,6 +911,7 @@
 
         let followingSet = new Set();
         let followersSet = new Set();
+        followedTimestamps = {};
         let detectedAccount = "account";
 
         try {
@@ -572,7 +927,6 @@
 
                 const followingFiles = [];
                 const followerFiles = [];
-                let personalFile = null;
 
                 for (const path of entries) {
                     const lower = path.toLowerCase().replace(/\\/g, "/");
@@ -582,45 +936,35 @@
                         followingFiles.push(zip.files[path]);
                     } else if (/^followers(_\d+)?\.json$/.test(base)) {
                         followerFiles.push(zip.files[path]);
-                    } else if (base === "personal_information.json" && !personalFile) {
-                        personalFile = zip.files[path];
                     }
-                }
-
-                if (personalFile) {
-                    try {
-                        const pTxt = await personalFile.async("string");
-                        const pData = JSON.parse(pTxt);
-                        const pUser = pData?.profile_user?.[0]?.string_map_data?.Username?.value;
-                        if (pUser) detectedAccount = pUser.trim().toLowerCase();
-                    } catch(e) {}
                 }
 
                 if (!followingFiles.length || !followerFiles.length) {
                     throw new Error("Could not find following.json and followers_1.json inside this ZIP archive.");
                 }
 
-                setProgress(32, "Extracting following.json...");
+                setProgress(32, "Extracting following.json & follow timestamps...");
                 for (const f of followingFiles) {
                     const txt = await f.async("string");
-                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
+                    const parsed = extractUsernamesFromJSON(JSON.parse(txt), true);
                     parsed.forEach(u => followingSet.add(u));
                 }
 
                 setProgress(38, "Extracting followers JSON files...");
                 for (const f of followerFiles) {
                     const txt = await f.async("string");
-                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
+                    const parsed = extractUsernamesFromJSON(JSON.parse(txt), false);
                     parsed.forEach(u => followersSet.add(u));
                 }
             } else {
                 for (const f of fileList) {
                     const base = f.name.toLowerCase();
                     const txt = await f.text();
-                    const parsed = extractUsernamesFromJSON(JSON.parse(txt));
                     if (base.includes("following")) {
+                        const parsed = extractUsernamesFromJSON(JSON.parse(txt), true);
                         parsed.forEach(u => followingSet.add(u));
                     } else if (base.includes("followers")) {
+                        const parsed = extractUsernamesFromJSON(JSON.parse(txt), false);
                         parsed.forEach(u => followersSet.add(u));
                     }
                 }
@@ -638,51 +982,37 @@
             // Load isolated storage for this account
             loadAccountStorage(allCandidates);
 
-            // When running with Desktop Auto-Verifier, perform a clean live verification of all candidates
+            // When running with Desktop Auto-Verifier, perform live verification + follower count extraction
             if (localEngineAvailable && allCandidates.length > 0) {
-                deadSet = new Set();
-                const batchSize = 5;
-                let checked = 0;
-                let activeCountSoFar = 0;
-
-                for (let i = 0; i < allCandidates.length; i += batchSize) {
-                    const batch = allCandidates.slice(i, i + batchSize);
-                    const pct = 40 + ((checked / allCandidates.length) * 58);
-                    setProgress(
-                        pct,
-                        `Verifying live profiles: ${checked} / ${allCandidates.length} checked (${activeCountSoFar} active, ${deadSet.size} dead)...`
-                    );
-                    try {
-                        const resp = await fetch("/api/verify", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ usernames: batch })
-                        });
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            activeCountSoFar += (data.active || []).length;
-                            for (const deadUser of (data.dead || [])) {
-                                deadSet.add(deadUser);
-                            }
-                        }
-                    } catch (err) {
-                        console.warn("Batch verification error:", err);
-                    }
-                    checked += batch.length;
-                }
-                saveAccountStorage();
+                await runEngineVerificationLoop();
             }
 
             setProgress(100, "Complete!");
             const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
 
-            // Store raw sets globally so renderList() can show active Following (excluding Dead/404)
             window.rawFollowingCount = followingSet.size;
             window.rawFollowersCount = followersSet.size;
             document.getElementById("benchmarkBadge").innerHTML =
                 `&#9889; Analyzed ${(followingSet.size + followersSet.size).toLocaleString()} connections in ${elapsed}s`;
             document.getElementById("accountSubtitle").innerHTML =
                 `Verified Active Non-Followers for <b>@${currentAccount}</b>`;
+
+            const hasFollowerCounts = Object.keys(followerCounts).length > 0;
+            const folBtn = document.getElementById("sortFollowersToggle");
+            folBtn.classList.toggle("disabled-sort", !hasFollowerCounts);
+
+            if (hasFollowerCounts) {
+                setSortMode("followers_desc", false);
+            } else if (Object.keys(followedTimestamps).length > 0) {
+                setSortMode("date_asc", false);
+            } else {
+                setSortMode("alpha_asc", false);
+            }
+
+            // Save full session snapshot so reopening/refreshing never requires re-uploading the ZIP!
+            saveFullSessionSnapshot(elapsed);
+            updateResumeBoxVisibility();
+            updateVerifyNowButton();
 
             document.getElementById("loadingView").style.display = "none";
             document.getElementById("dashboardView").style.display = "block";
@@ -693,9 +1023,6 @@
             resetApp();
         }
     }
-
-    function getDoneKey() { return `ig_verified_done_${currentAccount}`; }
-    function getDeadKey() { return `ig_verified_dead_v3_${currentAccount}`; }
 
     function loadAccountStorage(candidateList) {
         const validSet = new Set(candidateList);
@@ -708,11 +1035,124 @@
             const rawDead = JSON.parse(localStorage.getItem(getDeadKey()) || "[]");
             deadSet = new Set(rawDead.filter(u => validSet.has(u)));
         } catch (e) { deadSet = new Set(); }
+
+        try {
+            const rawCounts = JSON.parse(localStorage.getItem(getCountsKey()) || "{}");
+            followerCounts = {};
+            if (rawCounts && typeof rawCounts === "object") {
+                for (const [k, v] of Object.entries(rawCounts)) {
+                    if (validSet.has(k) && typeof v === "number" && v >= 0) {
+                        followerCounts[k] = v;
+                    }
+                }
+            }
+        } catch (e) { followerCounts = {}; }
     }
 
     function saveAccountStorage() {
         localStorage.setItem(getDoneKey(), JSON.stringify(Array.from(doneSet)));
         localStorage.setItem(getDeadKey(), JSON.stringify(Array.from(deadSet)));
+        localStorage.setItem(getCountsKey(), JSON.stringify(followerCounts));
+    }
+
+    function toggleFollowerSort() {
+        const hasFollowerCounts = Object.keys(followerCounts).length > 0;
+        if (!hasFollowerCounts) {
+            showToast("Run start_app.bat (Windows) or start_app.command (Mac) to fetch live follower counts!");
+            return;
+        }
+        if (sortMode === "followers_desc") {
+            setSortMode("followers_asc");
+        } else {
+            setSortMode("followers_desc");
+        }
+    }
+
+    function toggleDateSort() {
+        if (sortMode === "date_asc") {
+            setSortMode("date_desc");
+        } else {
+            setSortMode("date_asc");
+        }
+    }
+
+    function toggleAlphaSort() {
+        if (sortMode === "alpha_asc") {
+            setSortMode("alpha_desc");
+        } else {
+            setSortMode("alpha_asc");
+        }
+    }
+
+    function setSortMode(mode, shouldRender = true) {
+        sortMode = mode;
+        const folBtn = document.getElementById("sortFollowersToggle");
+        const dateBtn = document.getElementById("sortDateToggle");
+        const alphaBtn = document.getElementById("sortAlphaBtn");
+
+        folBtn.classList.remove("active");
+        dateBtn.classList.remove("active");
+        alphaBtn.classList.remove("active");
+
+        if (mode === "followers_desc") {
+            folBtn.classList.add("active");
+            folBtn.innerHTML = "&#8595; Followers: Most to Fewest";
+        } else if (mode === "followers_asc") {
+            folBtn.classList.add("active");
+            folBtn.innerHTML = "&#8593; Followers: Fewest to Most";
+        } else if (mode === "date_asc") {
+            dateBtn.classList.add("active");
+            dateBtn.innerHTML = "&#128197; Followed: Oldest First";
+        } else if (mode === "date_desc") {
+            dateBtn.classList.add("active");
+            dateBtn.innerHTML = "&#128197; Followed: Newest First";
+        } else if (mode === "alpha_desc") {
+            alphaBtn.classList.add("active");
+            alphaBtn.innerHTML = "Z &ndash; A";
+        } else {
+            alphaBtn.classList.add("active");
+            alphaBtn.innerHTML = "A &ndash; Z";
+        }
+        if (shouldRender) {
+            saveFullSessionSnapshot();
+            renderList();
+        }
+    }
+
+    function sortUserList(list) {
+        const copy = list.slice();
+        if (sortMode === "alpha_asc") {
+            return copy.sort((a, b) => a.localeCompare(b));
+        }
+        if (sortMode === "alpha_desc") {
+            return copy.sort((a, b) => b.localeCompare(a));
+        }
+        if (sortMode === "date_asc" || sortMode === "date_desc") {
+            return copy.sort((a, b) => {
+                const ta = followedTimestamps[a] || null;
+                const tb = followedTimestamps[b] || null;
+                if (ta === null && tb === null) return a.localeCompare(b);
+                if (ta === null) return 1;
+                if (tb === null) return -1;
+                if (ta !== tb) {
+                    return sortMode === "date_asc" ? (ta - tb) : (tb - ta);
+                }
+                return a.localeCompare(b);
+            });
+        }
+        return copy.sort((a, b) => {
+            const ca = (followerCounts[a] !== undefined && followerCounts[a] >= 0) ? followerCounts[a] : null;
+            const cb = (followerCounts[b] !== undefined && followerCounts[b] >= 0) ? followerCounts[b] : null;
+
+            if (ca === null && cb === null) return a.localeCompare(b);
+            if (ca === null) return 1;
+            if (cb === null) return -1;
+
+            if (ca !== cb) {
+                return sortMode === "followers_desc" ? (cb - ca) : (ca - cb);
+            }
+            return a.localeCompare(b);
+        });
     }
 
     function toggleDone(username) {
@@ -751,14 +1191,12 @@
         const doneUsers = activeUsers.filter(u => doneSet.has(u));
         const deadUsers = allCandidates.filter(u => deadSet.has(u));
 
-        // Update top counters (Subtract Dead/404 accounts from Following so it matches live Instagram profile!)
         const liveFollowingCount = Math.max(0, (window.rawFollowingCount || 0) - deadUsers.length);
         document.getElementById("statFollowing").innerText = liveFollowingCount.toLocaleString();
         document.getElementById("statFollowers").innerText = (window.rawFollowersCount || 0).toLocaleString();
         document.getElementById("statActiveNon").innerText = activeUsers.length.toLocaleString();
         document.getElementById("statDeadCount").innerText = deadUsers.length.toLocaleString();
 
-        // Update progress bar
         const totalActive = activeUsers.length;
         const completedCount = doneUsers.length;
         const pct = totalActive > 0 ? Math.round((completedCount / totalActive) * 100) : 0;
@@ -766,7 +1204,6 @@
             `${completedCount} / ${totalActive} Unfollowed (${pct}%)`;
         document.getElementById("unfollowBarFill").style.width = pct + "%";
 
-        // Update tab labels
         document.getElementById("tabPending").innerText = `To Unfollow (${pendingUsers.length})`;
         document.getElementById("tabDone").innerText = `Reviewed / Done (${doneUsers.length})`;
         document.getElementById("tabDead").innerHTML = `&#128683; Dead / 404 (${deadUsers.length})`;
@@ -778,7 +1215,8 @@
         else if (currentTab === "all") sourceList = activeUsers;
 
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
-        const filtered = query ? sourceList.filter(u => u.includes(query)) : sourceList;
+        const searched = query ? sourceList.filter(u => u.includes(query)) : sourceList;
+        const filtered = sortUserList(searched);
 
         const container = document.getElementById("userListContainer");
         if (!filtered.length) {
@@ -786,12 +1224,27 @@
             return;
         }
 
-        container.innerHTML = filtered.map(u => {
+        container.innerHTML = filtered.map((u, idx) => {
             const isDone = doneSet.has(u);
             const isDead = deadSet.has(u);
+            const fCount = followerCounts[u];
+            const fLabel = formatFollowerCount(fCount);
+            const dateLabel = formatFollowDate(followedTimestamps[u]);
+
+            let badgeClass = "follower-badge";
+            if (typeof fCount === "number") {
+                if (fCount >= 10000) badgeClass += " high-followers";
+                else if (fCount >= 1000) badgeClass += " mid-followers";
+            }
+
             return `
             <div class="user-row ${isDone ? 'is-done' : ''}">
-                <a class="user-link" href="https://www.instagram.com/${u}/" target="_blank" rel="noopener noreferrer">@${u}</a>
+                <div class="user-info">
+                    <span class="rank-num">#${idx + 1}</span>
+                    <a class="user-link" href="https://www.instagram.com/${u}/" target="_blank" rel="noopener noreferrer">@${u}</a>
+                    ${(!isDead && fLabel) ? `<span class="${badgeClass}">&#128101; ${fLabel}</span>` : ''}
+                    ${dateLabel ? `<span class="date-badge">&#128197; ${dateLabel}</span>` : ''}
+                </div>
                 <div class="row-actions">
                     ${!isDead ? `
                     <button class="btn-done ${isDone ? 'completed' : ''}" onclick="toggleDone('${u}')">
@@ -806,10 +1259,78 @@
     }
 
     function copyRemaining() {
-        const pending = allCandidates.filter(u => !deadSet.has(u) && !doneSet.has(u));
+        const pending = sortUserList(allCandidates.filter(u => !deadSet.has(u) && !doneSet.has(u)));
         navigator.clipboard.writeText(pending.join("\n")).then(() => {
             showToast(`Copied ${pending.length} usernames to clipboard!`);
         });
+    }
+
+    function deleteCurrentSession(targetAccount) {
+        const target = (targetAccount && targetAccount !== "default")
+            ? targetAccount
+            : (currentAccount && currentAccount !== "default")
+                ? currentAccount
+                : getStoredLastAccount();
+
+        const displayName = (target && target !== "default") ? `@${target}` : "this session";
+        const msg = `Are you sure you want to delete all saved session data for ${displayName}?\n\nThis will permanently remove your stored non-followers list, progress, and rankings from this computer so no one else can see your data.`;
+
+        if (!confirm(msg)) {
+            return;
+        }
+
+        try {
+            if (target) {
+                localStorage.removeItem(getSessionKey(target));
+                localStorage.removeItem(getLegacySessionKey(target));
+                localStorage.removeItem(`ig_verified_done_${target}`);
+                localStorage.removeItem(`ig_verified_dead_v3_${target}`);
+                localStorage.removeItem(`ig_verified_counts_v6_${target}`);
+
+                if (localStorage.getItem(LAST_ACCOUNT_KEY) === target) {
+                    localStorage.removeItem(LAST_ACCOUNT_KEY);
+                }
+                if (localStorage.getItem(LEGACY_LAST_ACCOUNT_KEY) === target) {
+                    localStorage.removeItem(LEGACY_LAST_ACCOUNT_KEY);
+                }
+            }
+            if (currentAccount && currentAccount !== target && currentAccount !== "default") {
+                localStorage.removeItem(getSessionKey(currentAccount));
+                localStorage.removeItem(getLegacySessionKey(currentAccount));
+                localStorage.removeItem(`ig_verified_done_${currentAccount}`);
+                localStorage.removeItem(`ig_verified_dead_v3_${currentAccount}`);
+                localStorage.removeItem(`ig_verified_counts_v6_${currentAccount}`);
+                if (localStorage.getItem(LAST_ACCOUNT_KEY) === currentAccount) {
+                    localStorage.removeItem(LAST_ACCOUNT_KEY);
+                }
+                if (localStorage.getItem(LEGACY_LAST_ACCOUNT_KEY) === currentAccount) {
+                    localStorage.removeItem(LEGACY_LAST_ACCOUNT_KEY);
+                }
+            }
+        } catch (e) {
+            console.warn("Storage deletion error:", e);
+        }
+
+        allCandidates = [];
+        doneSet.clear();
+        deadSet.clear();
+        followerCounts = {};
+        followedTimestamps = {};
+        window.rawFollowingCount = 0;
+        window.rawFollowersCount = 0;
+        currentAccount = "default";
+
+        const sub = document.getElementById("accountSubtitle");
+        if (sub) {
+            sub.innerHTML = "100% Private &bull; Auto 404 Pruning, Follower Count &amp; Follow Date Ranking";
+        }
+        const badge = document.getElementById("benchmarkBadge");
+        if (badge) {
+            badge.innerHTML = "&#9889; Analyzed in 0.00s";
+        }
+
+        resetApp();
+        showToast(`Session data deleted for ${displayName}`);
     }
 
     function clearAccountProgress() {
@@ -822,6 +1343,7 @@
 
     function resetApp() {
         fileInput.value = "";
+        updateResumeBoxVisibility();
         document.getElementById("loadingView").style.display = "none";
         document.getElementById("dashboardView").style.display = "none";
         document.getElementById("uploadView").style.display = "block";

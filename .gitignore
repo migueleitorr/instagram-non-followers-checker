@@ -2,16 +2,8 @@
 *.zip
 *.json
 my_results/
-MY PERSONAL INFO/
-Miguelfiles/
-Unified APP/
-conversation_transcript.txt
 
-# Ignore generated output reports
+# Ignore generated personal reports
+*.txt
 clean_non_followers.html
 active_non_followers.html
-*.txt
-
-# OS metadata
-Thumbs.db
-.DS_Store

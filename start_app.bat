@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Instagram Non-Followers & Verifier App (v3)
+title Instagram Non-Followers & Verifier App (v9)
 
 if not exist "%~dp0index.html" (
     echo.

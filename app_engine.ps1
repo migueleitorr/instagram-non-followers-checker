@@ -1,4 +1,4 @@
-﻿# Instagram Non-Followers & Live Verifier - Native Windows Engine v3 (Zero Python Needed)
+# Instagram Non-Followers & Live Verifier - Native Windows Engine v9 (Follower Count Ranking + 404 Pruning)
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
@@ -39,9 +39,9 @@ if ($null -eq $Listener) {
 $AppUrl = "http://127.0.0.1:$Port/index.html"
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host " Instagram Non-Followers & Live Verifier App (v3)" -ForegroundColor White
+Write-Host " Instagram Non-Followers & Live Verifier App (v9)" -ForegroundColor White
 Write-Host " Status : Running locally at $AppUrl" -ForegroundColor Green
-Write-Host " Engine : Windows Native Crawler Verifier (No Login)" -ForegroundColor Green
+Write-Host " Engine : Live 404 Verifier + Follower Count Extractor" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host " -> Opening app window now..." -ForegroundColor Yellow
@@ -58,9 +58,48 @@ $VerifyScriptBlock = {
     $Url = "https://www.instagram.com/$Username/"
     $UserLower = $Username.ToLowerInvariant()
 
-    # Step 1: Use Windows native curl.exe with Meta's official link-preview crawler User-Agent
-    # Instagram serves server-rendered OpenGraph metadata (og:title, og:description) to facebookexternalhit/1.1
-    # for all active accounts (public or private), and omits og:title for dead/404/deactivated accounts.
+    function Parse-FollowerCount([string]$HtmlText) {
+        if ([string]::IsNullOrWhiteSpace($HtmlText)) { return -1 }
+
+        # 1. Check exact JSON count if embedded
+        $JsonMatch = [regex]::Match($HtmlText, '"(?:edge_followed_by"\s*:\s*\{\s*"count|follower_count)"\s*:\s*(\d+)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($JsonMatch.Success) {
+            return [int64]$JsonMatch.Groups[1].Value
+        }
+
+        # 2. Check OpenGraph / meta description text (supports English & Spanish formats)
+        # Examples: "63K Followers", "1,234 Followers", "1.5M Followers", "63,4 mil seguidores", "1.234 seguidores"
+        $Decoded = [System.Net.WebUtility]::HtmlDecode($HtmlText)
+        $DescMatch = [regex]::Match(
+            $Decoded,
+            '(?:content=["''][^"'']*?|\b)([0-9][0-9.,\s]*?)\s*(k|m|b|mil|millones|de\s+millones)?\s*(?:de\s+)?(?:followers|follower|seguidores|seguidor)\b',
+            [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+        )
+        if ($DescMatch.Success) {
+            $NumRaw = ($DescMatch.Groups[1].Value -replace '\s+', '').Trim()
+            $Suffix = $DescMatch.Groups[2].Value.Trim().ToLowerInvariant()
+
+            $Mult = 1.0
+            if ($Suffix -eq 'k' -or $Suffix -eq 'mil') { $Mult = 1000.0 }
+            elseif ($Suffix -eq 'm' -or $Suffix -eq 'millones' -or $Suffix -eq 'de millones') { $Mult = 1000000.0 }
+            elseif ($Suffix -eq 'b') { $Mult = 1000000000.0 }
+
+            if ($Mult -gt 1.0) {
+                $Norm = $NumRaw.Replace(',', '.')
+                $Val = 0.0
+                if ([double]::TryParse($Norm, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$Val)) {
+                    return [int64][Math]::Round($Val * $Mult)
+                }
+            } else {
+                $DigitsOnly = $NumRaw -replace '[^\d]', ''
+                if ($DigitsOnly.Length -gt 0) {
+                    return [int64]$DigitsOnly
+                }
+            }
+        }
+        return -1
+    }
+
     $CurlExe = "$env:SystemRoot\System32\curl.exe"
     if (Test-Path $CurlExe) {
         try {
@@ -70,28 +109,33 @@ $VerifyScriptBlock = {
                 $Url 2>$null
 
             if ($null -ne $Html) {
-                $Raw = ($Html -join "`n").ToLowerInvariant()
+                $RawText = ($Html -join "`n")
+                $Raw = $RawText.ToLowerInvariant()
                 if ($Raw.Length -gt 200) {
                     if ($Raw.Contains('property="og:title"') -or $Raw.Contains('property="og:description"') -or $Raw.Contains("(@$UserLower)")) {
-                        return @{ u = $Username; active = $true }
+                        $FCount = Parse-FollowerCount $RawText
+                        return @{ u = $Username; active = $true; followers = $FCount }
                     }
-                    # If Instagram returned a normal page shell without og:title (and not a login redirect), double-check with TelegramBot
+                    # Secondary check with TelegramBot
                     $Html2 = & $CurlExe -s -L --max-time 8 --compressed `
                         -A "TelegramBot (like TwitterBot)" `
+                        -H "Accept-Language: en-US,en;q=0.9" `
                         $Url 2>$null
-                    $Raw2 = ($Html2 -join "`n").ToLowerInvariant()
+                    $RawText2 = ($Html2 -join "`n")
+                    $Raw2 = $RawText2.ToLowerInvariant()
                     if ($Raw2.Contains('property="og:title"') -or $Raw2.Contains('property="og:description"') -or $Raw2.Contains("(@$UserLower)")) {
-                        return @{ u = $Username; active = $true }
+                        $FCount2 = Parse-FollowerCount $RawText2
+                        return @{ u = $Username; active = $true; followers = $FCount2 }
                     }
                     if ($Raw.Contains("<title>instagram</title>") -or $Raw.Contains("page isn't available") -or $Raw.Contains("page not found")) {
-                        return @{ u = $Username; active = $false }
+                        return @{ u = $Username; active = $false; followers = -1 }
                     }
                 }
             }
         } catch {}
     }
 
-    # Step 2: Fallback to .NET HttpWebRequest with GZip decompression and facebookexternalhit User-Agent
+    # Step 2: Fallback to .NET HttpWebRequest
     try {
         $Req = [System.Net.HttpWebRequest]::Create($Url)
         $Req.Method = "GET"
@@ -105,30 +149,32 @@ $VerifyScriptBlock = {
         $Resp = [System.Net.HttpWebResponse]$Req.GetResponse()
         if ([int]$Resp.StatusCode -eq 404) {
             $Resp.Close()
-            return @{ u = $Username; active = $false }
+            return @{ u = $Username; active = $false; followers = -1 }
         }
 
         $Stream = $Resp.GetResponseStream()
         $Reader = New-Object System.IO.StreamReader($Stream, [System.Text.Encoding]::UTF8)
-        $Body = $Reader.ReadToEnd().ToLowerInvariant()
+        $BodyText = $Reader.ReadToEnd()
+        $Body = $BodyText.ToLowerInvariant()
         $Reader.Close()
         $Resp.Close()
 
         if ($Body.Contains('property="og:title"') -or $Body.Contains('property="og:description"') -or $Body.Contains("(@$UserLower)")) {
-            return @{ u = $Username; active = $true }
+            $FCount = Parse-FollowerCount $BodyText
+            return @{ u = $Username; active = $true; followers = $FCount }
         }
         if ($Body.Contains("<title>instagram</title>") -or $Body.Contains("sorry, this page isn't available")) {
-            return @{ u = $Username; active = $false }
+            return @{ u = $Username; active = $false; followers = -1 }
         }
-        return @{ u = $Username; active = $true }
+        return @{ u = $Username; active = $true; followers = -1 }
     } catch [System.Net.WebException] {
         $WebResp = $_.Exception.Response
         if ($null -ne $WebResp -and [int]$WebResp.StatusCode -eq 404) {
-            return @{ u = $Username; active = $false }
+            return @{ u = $Username; active = $false; followers = -1 }
         }
-        return @{ u = $Username; active = $true }
+        return @{ u = $Username; active = $true; followers = -1 }
     } catch {
-        return @{ u = $Username; active = $true }
+        return @{ u = $Username; active = $true; followers = -1 }
     }
 }
 
@@ -143,7 +189,7 @@ function Open-AppWindow([string]$Url) {
     foreach ($Exe in $Browsers) {
         if (Test-Path $Exe) {
             try {
-                Start-Process -FilePath $Exe -ArgumentList "--app=$Url", "--window-size=920,840"
+                Start-Process -FilePath $Exe -ArgumentList "--app=$Url", "--window-size=940,860"
                 return
             } catch {}
         }
@@ -221,7 +267,7 @@ try {
             }
 
             if ($Method -eq "GET" -and $Path -eq "/api/ping") {
-                $OutBytes = [System.Text.Encoding]::UTF8.GetBytes('{"status":"ok","version":"v3"}')
+                $OutBytes = [System.Text.Encoding]::UTF8.GetBytes('{"status":"ok","version":"v6"}')
                 Send-HttpResponse $Stream 200 "OK" "application/json; charset=utf-8" $OutBytes
             }
             elseif ($Method -eq "POST" -and $Path -eq "/api/verify") {
@@ -241,6 +287,7 @@ try {
 
                 $ActiveList = @()
                 $DeadList = @()
+                $CountsPairs = @()
                 foreach ($Job in $Jobs) {
                     try {
                         $Res = $Job.PS.EndInvoke($Job.Handle)
@@ -248,17 +295,21 @@ try {
                             $DeadList += $Res[0].u
                         } elseif ($Res) {
                             $ActiveList += $Res[0].u
+                            if ($null -ne $Res[0].followers -and [int64]$Res[0].followers -ge 0) {
+                                $CountsPairs += ('"' + $Res[0].u + '":' + [int64]$Res[0].followers)
+                            }
                         }
                     } catch {} finally {
                         $Job.PS.Dispose()
                     }
                 }
 
-                Write-Host (" [Verified Batch] Active: {0} | Dead/404: {1}" -f $ActiveList.Count, $DeadList.Count) -ForegroundColor Gray
+                Write-Host (" [Verified Batch] Active: {0} | Dead/404: {1} | Follower Counts Parsed: {2}" -f $ActiveList.Count, $DeadList.Count, $CountsPairs.Count) -ForegroundColor Gray
 
                 $ActiveJson = ($ActiveList | ForEach-Object { '"' + $_ + '"' }) -join ","
                 $DeadJson = ($DeadList | ForEach-Object { '"' + $_ + '"' }) -join ","
-                $JsonStr = "{`"active`":[$ActiveJson],`"dead`":[$DeadJson]}"
+                $CountsJson = $CountsPairs -join ","
+                $JsonStr = "{`"active`":[$ActiveJson],`"dead`":[$DeadJson],`"counts`":{$CountsJson}}"
                 $OutBytes = [System.Text.Encoding]::UTF8.GetBytes($JsonStr)
                 Send-HttpResponse $Stream 200 "OK" "application/json; charset=utf-8" $OutBytes
             }
