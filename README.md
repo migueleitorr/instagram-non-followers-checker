@@ -41,10 +41,6 @@ Follow these simple, step-by-step instructions to request your official data exp
 11. Then hit **Start export**.
 12. **Download the file:** You will receive an email confirming the export task was initiated, and a second email once it is ready. Once completed, open the link or return to Instagram and download the `.zip` file to your device.
 
-> **💡 Do you need to unzip it?**  
-> * **On Desktop (or modern mobile browsers):** You do NOT need to extract the ZIP! You can drag and drop (or select) the raw `.zip` file directly into the app.  
-> * **Alternative for mobile:** If your mobile browser only allows selecting individual files, extract the ZIP and simply select `following.json` and `followers_1.json`.
-
 ---
 
 ## 🚀 Two Ways to Use the Application
